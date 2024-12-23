@@ -1,5 +1,3 @@
-#![cfg_attr(feature = "cargo-clippy", allow(new_without_default_derive))]
-
 #[macro_use]
 extern crate log;
 extern crate env_logger;

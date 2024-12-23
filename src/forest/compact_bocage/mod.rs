@@ -8,10 +8,10 @@ use std::hint;
 use bit_vec::BitVec;
 use cfg::symbol::Symbol;
 
-use forest::node_handle::NodeHandle;
-use forest::Forest;
-use grammar::InternalGrammar;
-use item::CompletedItem;
+use crate::forest::node_handle::NodeHandle;
+use crate::forest::Forest;
+use crate::grammar::InternalGrammar;
+use crate::item::CompletedItem;
 
 use self::node::Node::*;
 use self::node::{Graph, Node, NULL_ACTION};
@@ -123,7 +123,7 @@ where
     }
 
     #[inline]
-    fn summands<'a>(graph: &'a Graph, node: NodeHandle) -> impl Iterator<Item = Node> + 'a {
+    fn summands(graph: &'_ Graph, node: NodeHandle) -> impl Iterator<Item = Node> + '_ {
         let mut iter = graph.iter_from(node);
         match iter.peek() {
             Some(Sum { count, .. }) => {
@@ -136,26 +136,23 @@ where
 
     #[inline]
     fn process_product_tree_node(&self, mut node: Node) -> Node {
-        match node {
-            Product {
-                ref mut left_factor,
-                ref mut right_factor,
-                action,
-            } => {
-                if right_factor.is_none() {
-                    // Add omitted phantom syms here.
-                    if let Some((sym, dir)) = self.grammar.borrow().nulling(action) {
-                        let (left, right) = if dir {
-                            (*left_factor, NodeHandle::nulling(sym))
-                        } else {
-                            (NodeHandle::nulling(sym), *left_factor)
-                        };
-                        *left_factor = left;
-                        *right_factor = Some(right);
-                    }
+        if let Product {
+            ref mut left_factor,
+            ref mut right_factor,
+            action,
+        } = node {
+            if right_factor.is_none() {
+                // Add omitted phantom syms here.
+                if let Some((sym, dir)) = self.grammar.borrow().nulling(action) {
+                    let (left, right) = if dir {
+                        (*left_factor, NodeHandle::nulling(sym))
+                    } else {
+                        (NodeHandle::nulling(sym), *left_factor)
+                    };
+                    *left_factor = left;
+                    *right_factor = Some(right);
                 }
             }
-            _ => {}
         }
         node
     }

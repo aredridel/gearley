@@ -3,11 +3,11 @@ use std::mem;
 use bit_matrix::BitMatrix;
 use bit_vec::BitVec;
 
-use forest::node_handle::NodeHandle;
-use forest::{Bocage, CompactBocage, Forest, NullForest};
-use grammar::InternalGrammar;
-use item::{CompletedItem, Item};
-use recognizer::Recognizer;
+use crate::forest::node_handle::NodeHandle;
+use crate::forest::{Bocage, CompactBocage, Forest, NullForest};
+use crate::grammar::InternalGrammar;
+use crate::item::{CompletedItem, Item};
+use crate::recognizer::Recognizer;
 
 const ITEMS_PER_SET: usize = 16;
 
@@ -37,8 +37,8 @@ where
             / (F::FOREST_BYTES_PER_RECOGNIZER_BYTE + 1);
         let complete_use = match memory_limit {
             0..=1000 => 16,
-            1000..=500_000 => 32,
-            500_000..=2_000_000 => 64,
+            1001..=500_000 => 32,
+            500_001..=2_000_000 => 64,
             _ => 128,
         };
         let recognizer_use_bytes = memory_limit
@@ -78,8 +78,8 @@ where
         let forest_use_bytes = tokens * 16;
         let complete_use = match tokens {
             0..=200 => 16,
-            200..=10_000 => 32,
-            10_000..=100_000 => 64,
+            201..=10_000 => 32,
+            10_001..=100_000 => 64,
             _ => 128,
         };
         let mut recognizer = Recognizer {
@@ -117,8 +117,8 @@ impl<'g> MemoryUse for Recognizer<'g, NullForest> {
     fn new_with_limit(grammar: &'g InternalGrammar, memory_limit: usize) -> Self {
         let complete_use = match memory_limit {
             0..=1000 => 16,
-            1000..=500_000 => 32,
-            500_000..=2_000_000 => 64,
+            1001..=500_000 => 32,
+            500_001..=2_000_000 => 64,
             _ => 128,
         };
         let recognizer_use_bytes =
@@ -211,7 +211,7 @@ impl<'g> MemoryUse for Bocage<&'g InternalGrammar> {
     fn new_with_limit(grammar: &'g InternalGrammar, memory_limit: usize) -> Self {
         let dfs_size = match memory_limit {
             0..=1000 => 8,
-            1000..=100_000 => 32,
+            1001..=100_000 => 32,
             _ => 64,
         };
         let remaining_use = memory_limit - dfs_size * std::mem::size_of::<NodeHandle>();
@@ -231,7 +231,7 @@ impl<'g> MemoryUse for CompactBocage<&'g InternalGrammar> {
     fn new_with_limit(grammar: &'g InternalGrammar, memory_limit: usize) -> Self {
         let dfs_size = match memory_limit {
             0..=1000 => 8,
-            1000..=100_000 => 32,
+            1001..=100_000 => 32,
             _ => 64,
         };
         let remaining_use = memory_limit - dfs_size * std::mem::size_of::<NodeHandle>();

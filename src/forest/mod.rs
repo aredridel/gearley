@@ -10,7 +10,7 @@ pub use self::null_forest::NullForest;
 use cfg::Symbol;
 use std::fmt;
 
-use item::CompletedItem;
+use crate::item::CompletedItem;
 
 pub trait Forest {
     /// Reference to a node.

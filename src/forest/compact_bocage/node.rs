@@ -4,8 +4,7 @@ use std::hint;
 use cfg::symbol::Symbol;
 
 pub use self::Node::*;
-use self::Tag::*;
-use forest::node_handle::{NodeHandle, NULL_HANDLE};
+use crate::forest::node_handle::{NodeHandle, NULL_HANDLE};
 
 pub struct Graph {
     pub(crate) vec: Vec<Cell<u16>>,
@@ -43,7 +42,7 @@ impl Graph {
         }
         handle.0 += size as u32;
         while handle.0 < current_handle.0 {
-            self.vec[handle.usize()].set(NopTag.to_u16());
+            self.vec[handle.usize()].set(Tag::Nop.to_u16());
             handle.0 += 1;
         }
     }
@@ -77,7 +76,7 @@ impl<'a> Iterator for Iter<'a> {
                 return None;
             };
             let (tag, head) = get_and_erase_tag(head);
-            if let NopTag = tag {
+            if let Tag::Nop = tag {
                 self.handle.0 += 1;
                 self.next()
             } else {
@@ -208,45 +207,45 @@ struct NopRepr {
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub(super) enum Tag {
-    SmallSumTag = 0b000 << TAG_BIT,
-    SmallLinkTag = 0b001 << TAG_BIT,
-    MediumLinkTag = 0b010 << TAG_BIT,
-    SmallProductTag = 0b011 << TAG_BIT,
-    SmallLeafTag = 0b100 << TAG_BIT,
+    SmallSum = 0b000 << TAG_BIT,
+    SmallLink = 0b001 << TAG_BIT,
+    MediumLink = 0b010 << TAG_BIT,
+    SmallProduct = 0b011 << TAG_BIT,
+    SmallLeaf = 0b100 << TAG_BIT,
     // SmallNonnullingLeaf = 0b1000 << (TAG_BIT - 1),
-    SmallNullingLeafTag = 0b1001 << (TAG_BIT - 1),
-    LeafTag = 0b101 << TAG_BIT,
-    SumTag = 0b111 << TAG_BIT,
-    ProductTag = 0b110 << TAG_BIT,
-    NopTag = 0b1111_1111_1111_1111,
+    SmallNullingLeaf = 0b1001 << (TAG_BIT - 1),
+    Leaf = 0b101 << TAG_BIT,
+    Sum = 0b111 << TAG_BIT,
+    Product = 0b110 << TAG_BIT,
+    Nop = 0b1111_1111_1111_1111,
 }
 
 impl Tag {
     #[inline]
     fn from_u16(num: u16) -> Option<Self> {
         let n = num & TAG_MASK;
-        if num == NopTag.to_u16() {
-            Some(NopTag)
-        } else if n == LeafTag.to_u16() {
-            Some(LeafTag)
-        } else if n == SumTag.to_u16() {
-            Some(SumTag)
-        } else if n == ProductTag.to_u16() {
-            Some(ProductTag)
-        } else if n == SmallSumTag.to_u16() {
-            Some(SmallSumTag)
-        } else if n == SmallLinkTag.to_u16() {
-            Some(SmallLinkTag)
-        } else if n == MediumLinkTag.to_u16() {
-            Some(MediumLinkTag)
-        } else if n == SmallProductTag.to_u16() {
-            Some(SmallProductTag)
-        } else if n == SmallLeafTag.to_u16() {
+        if num == Tag::Nop.to_u16() {
+            Some(Tag::Nop)
+        } else if n == Tag::Leaf.to_u16() {
+            Some(Tag::Leaf)
+        } else if n == Tag::Sum.to_u16() {
+            Some(Tag::Sum)
+        } else if n == Tag::Product.to_u16() {
+            Some(Tag::Product)
+        } else if n == Tag::SmallSum.to_u16() {
+            Some(Tag::SmallSum)
+        } else if n == Tag::SmallLink.to_u16() {
+            Some(Tag::SmallLink)
+        } else if n == Tag::MediumLink.to_u16() {
+            Some(Tag::MediumLink)
+        } else if n == Tag::SmallProduct.to_u16() {
+            Some(Tag::SmallProduct)
+        } else if n == Tag::SmallLeaf.to_u16() {
             let n = num & SMALL_LEAF_TAG_MASK;
-            if n == SmallLeafTag.to_u16() {
-                Some(SmallLeafTag)
-            } else if n == SmallNullingLeafTag.to_u16() {
-                Some(SmallNullingLeafTag)
+            if n == Tag::SmallLeaf.to_u16() {
+                Some(Tag::SmallLeaf)
+            } else if n == Tag::SmallNullingLeaf.to_u16() {
+                Some(Tag::SmallNullingLeaf)
             } else {
                 None
             }
@@ -258,50 +257,50 @@ impl Tag {
     #[inline]
     pub(super) fn to_u16(self) -> u16 {
         match self {
-            SmallSumTag => 0b000 << TAG_BIT,
-            SmallLinkTag => 0b001 << TAG_BIT,
-            MediumLinkTag => 0b010 << TAG_BIT,
-            SmallProductTag => 0b011 << TAG_BIT,
-            SmallLeafTag => 0b100 << TAG_BIT,
+            Tag::SmallSum => 0b000 << TAG_BIT,
+            Tag::SmallLink => 0b001 << TAG_BIT,
+            Tag::MediumLink => 0b010 << TAG_BIT,
+            Tag::SmallProduct => 0b011 << TAG_BIT,
+            Tag::SmallLeaf => 0b100 << TAG_BIT,
             // SmallNonnullingLeaf = 0b1000 << (TAG_BIT - 1),
-            SmallNullingLeafTag => 0b1001 << (TAG_BIT - 1),
-            LeafTag => 0b101 << TAG_BIT,
-            SumTag => 0b111 << TAG_BIT,
-            ProductTag => 0b110 << TAG_BIT,
-            NopTag => 0b1111_1111_1111_1111,
+            Tag::SmallNullingLeaf => 0b1001 << (TAG_BIT - 1),
+            Tag::Leaf => 0b101 << TAG_BIT,
+            Tag::Sum => 0b111 << TAG_BIT,
+            Tag::Product => 0b110 << TAG_BIT,
+            Tag::Nop => 0b1111_1111_1111_1111,
         }
     }
 
     #[inline]
     fn mask(self) -> u16 {
         match self {
-            SmallSumTag => TAG_MASK,
-            SmallLinkTag => TAG_MASK,
-            MediumLinkTag => TAG_MASK,
-            SmallProductTag => TAG_MASK,
-            SmallLeafTag => SMALL_LEAF_TAG_MASK,
+            Tag::SmallSum => TAG_MASK,
+            Tag::SmallLink => TAG_MASK,
+            Tag::MediumLink => TAG_MASK,
+            Tag::SmallProduct => TAG_MASK,
+            Tag::SmallLeaf => SMALL_LEAF_TAG_MASK,
             // SmallNonnullingLeaf = 0b1000 << (TAG_BIT - 1),
-            SmallNullingLeafTag => SMALL_LEAF_TAG_MASK,
-            LeafTag => TAG_MASK,
-            SumTag => TAG_MASK,
-            ProductTag => TAG_MASK,
-            NopTag => 0b1111_1111_1111_1111,
+            Tag::SmallNullingLeaf => SMALL_LEAF_TAG_MASK,
+            Tag::Leaf => TAG_MASK,
+            Tag::Sum => TAG_MASK,
+            Tag::Product => TAG_MASK,
+            Tag::Nop => 0b1111_1111_1111_1111,
         }
     }
 
     #[inline]
     pub(super) fn size(self) -> usize {
         match self {
-            SmallSumTag => 1,
-            SmallLinkTag => 1,
-            MediumLinkTag => 2,
-            SmallProductTag => 2,
-            SmallLeafTag => 1,
-            SmallNullingLeafTag => 1,
-            LeafTag => 4,
-            SumTag => 4,
-            ProductTag => 6,
-            NopTag => 1,
+            Tag::SmallSum => 1,
+            Tag::SmallLink => 1,
+            Tag::MediumLink => 2,
+            Tag::SmallProduct => 2,
+            Tag::SmallLeaf => 1,
+            Tag::SmallNullingLeaf => 1,
+            Tag::Leaf => 4,
+            Tag::Sum => 4,
+            Tag::Product => 6,
+            Tag::Nop => 1,
         }
     }
 }
@@ -319,7 +318,7 @@ impl NodeRepr {
                     NodeRepr {
                         small_sum: SmallSumRepr { nonterminal, count },
                     },
-                    SmallSumTag,
+                    Tag::SmallSum,
                 ) => Sum {
                     nonterminal: Symbol::from(nonterminal as u32),
                     count: count as u32,
@@ -328,13 +327,13 @@ impl NodeRepr {
                     NodeRepr {
                         sum: SumRepr { nonterminal, count },
                     },
-                    SumTag,
+                    Tag::Sum,
                 ) => Sum { nonterminal, count },
                 (
                     NodeRepr {
                         small_link: SmallLinkRepr { distance, action },
                     },
-                    SmallLinkTag,
+                    Tag::SmallLink,
                 ) => Product {
                     action: action as u32,
                     left_factor: NodeHandle(position - distance as u32),
@@ -344,7 +343,7 @@ impl NodeRepr {
                     NodeRepr {
                         medium_link: MediumLinkRepr { distance, action },
                     },
-                    MediumLinkTag,
+                    Tag::MediumLink,
                 ) => Product {
                     action: action as u32,
                     left_factor: NodeHandle(position - distance as u32),
@@ -359,7 +358,7 @@ impl NodeRepr {
                                 action,
                             },
                     },
-                    SmallProductTag,
+                    Tag::SmallProduct,
                 ) => Product {
                     action: action as u32,
                     left_factor: NodeHandle(position - left_distance as u32),
@@ -375,7 +374,7 @@ impl NodeRepr {
                                 right_factor,
                             },
                     },
-                    ProductTag,
+                    Tag::Product,
                 ) => Product {
                     action: (upper_action as u32) << 16 | (lower_action as u32),
                     left_factor,
@@ -385,7 +384,7 @@ impl NodeRepr {
                     NodeRepr {
                         small_nulling_leaf: SmallNullingLeafRepr { symbol },
                     },
-                    SmallNullingLeafTag,
+                    Tag::SmallNullingLeaf,
                 ) => NullingLeaf {
                     symbol: Symbol::from(symbol as u32),
                 },
@@ -393,7 +392,7 @@ impl NodeRepr {
                     NodeRepr {
                         small_leaf: SmallLeafRepr { symbol },
                     },
-                    SmallLeafTag,
+                    Tag::SmallLeaf,
                 ) => Evaluated {
                     symbol: Symbol::from(symbol as u32),
                 },
@@ -401,7 +400,7 @@ impl NodeRepr {
                     NodeRepr {
                         leaf: LeafRepr { symbol },
                     },
-                    LeafTag,
+                    Tag::Leaf,
                 ) => Evaluated { symbol },
                 _ => unreachable!(),
             }
@@ -415,13 +414,13 @@ impl Node {
         let tag = self.classify(position);
         unsafe {
             let mut result = match (self, tag) {
-                (Sum { nonterminal, count }, SmallSumTag) => NodeRepr {
+                (Sum { nonterminal, count }, Tag::SmallSum) => NodeRepr {
                     small_sum: SmallSumRepr {
                         nonterminal: nonterminal.usize() as u8,
                         count: count as u8,
                     },
                 },
-                (Sum { nonterminal, count }, SumTag) => NodeRepr {
+                (Sum { nonterminal, count }, Tag::Sum) => NodeRepr {
                     sum: SumRepr { nonterminal, count },
                 },
                 (
@@ -430,7 +429,7 @@ impl Node {
                         right_factor: None,
                         action,
                     },
-                    SmallLinkTag,
+                    Tag::SmallLink,
                 ) => NodeRepr {
                     small_link: SmallLinkRepr {
                         distance: (position - left_factor.0) as u8,
@@ -443,7 +442,7 @@ impl Node {
                         right_factor: None,
                         action,
                     },
-                    MediumLinkTag,
+                    Tag::MediumLink,
                 ) => NodeRepr {
                     medium_link: MediumLinkRepr {
                         distance: (position - left_factor.0) as u16,
@@ -456,7 +455,7 @@ impl Node {
                         right_factor: Some(right),
                         action,
                     },
-                    SmallProductTag,
+                    Tag::SmallProduct,
                 ) => NodeRepr {
                     small_product: SmallProductRepr {
                         right_distance: (position - right.0) as u8,
@@ -470,7 +469,7 @@ impl Node {
                         right_factor,
                         action,
                     },
-                    ProductTag,
+                    Tag::Product,
                 ) => NodeRepr {
                     product: ProductRepr {
                         upper_action: (action >> 16) as u16,
@@ -479,20 +478,20 @@ impl Node {
                         right_factor: right_factor.unwrap_or(NULL_HANDLE),
                     },
                 },
-                (NullingLeaf { symbol }, SmallNullingLeafTag) => NodeRepr {
+                (NullingLeaf { symbol }, Tag::SmallNullingLeaf) => NodeRepr {
                     small_nulling_leaf: SmallNullingLeafRepr {
                         symbol: symbol.usize() as u16,
                     },
                 },
-                (NullingLeaf { symbol }, LeafTag) => NodeRepr {
+                (NullingLeaf { symbol }, Tag::Leaf) => NodeRepr {
                     leaf: LeafRepr { symbol },
                 },
-                (Evaluated { symbol }, SmallLeafTag) => NodeRepr {
+                (Evaluated { symbol }, Tag::SmallLeaf) => NodeRepr {
                     small_leaf: SmallLeafRepr {
                         symbol: symbol.usize() as u16,
                     },
                 },
-                (Evaluated { symbol }, LeafTag) => NodeRepr {
+                (Evaluated { symbol }, Tag::Leaf) => NodeRepr {
                     leaf: LeafRepr { symbol },
                 },
                 _ => unreachable!(),
@@ -517,9 +516,9 @@ impl Node {
                         && position - left_factor.0 < (1 << 8)
                         && action < (1 << 16)
                     {
-                        SmallProductTag
+                        Tag::SmallProduct
                     } else {
-                        ProductTag
+                        Tag::Product
                     }
                 }
                 None => {
@@ -527,36 +526,36 @@ impl Node {
                         && position - left_factor.0 < (1 << 5)
                         && action < (1 << 8)
                     {
-                        SmallLinkTag
+                        Tag::SmallLink
                     } else if position >= left_factor.0
                         && position - left_factor.0 < (1 << (5 + 8))
                         && action < (1 << 16)
                     {
-                        MediumLinkTag
+                        Tag::MediumLink
                     } else {
-                        ProductTag
+                        Tag::Product
                     }
                 }
             },
             NullingLeaf { symbol } => {
                 if symbol.usize() < (1 << (4 + 8)) {
-                    SmallNullingLeafTag
+                    Tag::SmallNullingLeaf
                 } else {
-                    LeafTag
+                    Tag::Leaf
                 }
             }
             Evaluated { symbol } => {
                 if symbol.usize() < (1 << (4 + 8)) {
-                    SmallLeafTag
+                    Tag::SmallLeaf
                 } else {
-                    LeafTag
+                    Tag::Leaf
                 }
             }
             Sum { nonterminal, count } => {
                 if count < (1 << 5) && nonterminal.usize() < (1 << 8) {
-                    SmallSumTag
+                    Tag::SmallSum
                 } else {
-                    SumTag
+                    Tag::Sum
                 }
             }
         }

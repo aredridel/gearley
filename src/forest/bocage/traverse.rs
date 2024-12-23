@@ -3,13 +3,13 @@ use std::slice;
 
 use bit_vec;
 use cfg::symbol::Symbol;
-use ref_slice::ref_slice;
+use core::slice::from_ref;
 
-use forest::bocage::node::Node::*;
-use forest::bocage::node::{CompactNode, Node};
-use forest::node_handle::NodeHandle;
-use forest::Bocage;
-use grammar::InternalGrammar;
+use crate::forest::bocage::node::Node::*;
+use crate::forest::bocage::node::{CompactNode, Node};
+use crate::forest::node_handle::NodeHandle;
+use crate::forest::Bocage;
+use crate::grammar::InternalGrammar;
 
 pub use self::HandleVariant::*;
 
@@ -55,7 +55,7 @@ where
                         node,
                         symbol: self.bocage.grammar.borrow().get_lhs(action),
                         item: SumHandle(Products {
-                            products: ref_slice(node).iter(),
+                            products: from_ref(node).iter(),
                             traverse: self,
                         }),
                     });
@@ -158,8 +158,8 @@ impl<'f, 't, G> Products<'f, 't, G>
 where
     G: Borrow<InternalGrammar>,
 {
-    pub fn next_product<'p>(&'p mut self) -> Option<ProductHandle> {
-        while let Some(node) = self.products.next() {
+    pub fn next_product(&mut self) -> Option<ProductHandle> {
+        for node in self.products.by_ref() {
             match node.expand() {
                 Product {
                     left_factor,

@@ -12,14 +12,12 @@
 //! A priority queue implemented with a binary heap.
 
 #![allow(missing_docs)]
-#![cfg_attr(feature = "cargo-clippy", allow(nonminimal_bool))]
 
 use std::mem::swap;
-use std::u32;
 
-use forest::Forest;
-use item::{CompletedItem, CompletedItemLinked, Item};
-use recognizer::Recognizer;
+use crate::forest::Forest;
+use crate::item::{CompletedItem, CompletedItemLinked, Item};
+use crate::recognizer::Recognizer;
 
 impl<'g, F> Recognizer<'g, F>
     where F: Forest,
@@ -109,7 +107,7 @@ impl<'g, F> Recognizer<'g, F>
         while child < end {
             let right = child + 1;
             // compare with the greater of the two children
-            if right < end && !(self.heap_get(child).unwrap() > self.heap_get(right).unwrap()) {
+            if right < end && self.heap_get(child).unwrap() <= self.heap_get(right).unwrap() {
                 child = right;
             }
             // if we are already in order, stop.

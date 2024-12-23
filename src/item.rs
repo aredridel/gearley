@@ -72,12 +72,12 @@ impl<L> Ord for CompletedItem<L> {
     }
 }
 
-impl<N> Into<Item<N>> for CompletedItem<N> {
-    fn into(self) -> Item<N> {
+impl<N> From<CompletedItem<N>> for Item<N> {
+    fn from(c: CompletedItem<N>) -> Self {
         Item {
-            origin: self.origin,
-            dot: self.dot,
-            node: self.left_node,
+            origin: c.origin,
+            dot: c.dot,
+            node: c.left_node,
         }
     }
 }

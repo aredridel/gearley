@@ -69,7 +69,6 @@
 //!
 //! ...
 
-use std::convert::TryInto;
 use std::iter;
 
 use bit_matrix::BitMatrix;
@@ -80,7 +79,7 @@ use cfg::remap::Mapping;
 use cfg::prediction::{FirstSetsCollector, FollowSets};
 use optional::Optioned;
 
-use item::Dot;
+use crate::item::Dot;
 
 pub use cfg::earley::{Grammar, BinarizedGrammar};
 pub use cfg::earley::history::History;
@@ -292,19 +291,15 @@ impl InternalGrammar {
         self.first_sets = BitMatrix::new(self.size.syms, self.size.syms);
         let first_sets = FirstSetsCollector::new(grammar);
         for (outer, inner) in first_sets.first_sets() {
-            for elem_inner in inner.into_iter() {
-                if let Some(inner_sym) = elem_inner {
-                    self.first_sets.set(outer.usize(), inner_sym.usize(), true);
-                }
+            for inner_sym in inner.iter().flatten() {
+                self.first_sets.set(outer.usize(), inner_sym.usize(), true);
             }
         }
         self.first_sets.reflexive_closure();
         let follow_sets = FollowSets::new(grammar, grammar.start(), first_sets.first_sets());
-        for (before, after) in follow_sets.follow_sets().into_iter() {
-            for elem_after in after.into_iter() {
-                if let Some(after_sym) = elem_after {
-                    self.follow_sets.set(before.usize(), after_sym.usize(), true);
-                }
+        for (before, after) in follow_sets.follow_sets() {
+            for after_sym in after.iter().flatten() {
+                self.follow_sets.set(before.usize(), after_sym.usize(), true);
             }
         }
     }
@@ -351,7 +346,7 @@ impl InternalGrammar {
     }
 
     fn populate_unary_completions(&mut self, table: &CompletionTable) {
-        let iter_table = table.into_iter().flat_map(|v| v.into_iter());
+        let iter_table = table.iter().flat_map(|v| v.iter());
         self.unary_completions.extend(iter_table);
     }
 
@@ -392,7 +387,7 @@ impl InternalGrammar {
     }
 
     fn populate_binary_completions(&mut self, table: &CompletionTable) {
-        let iter_table = table.into_iter().flat_map(|v| v.into_iter());
+        let iter_table = table.iter().flat_map(|v| v.iter());
         self.binary_completions.extend(iter_table);
     }
 
@@ -524,7 +519,7 @@ impl InternalGrammar {
     }
 
     pub(in super) fn eliminated_nulling_intermediate(&self) -> &[NullingIntermediateRule] {
-        &*self.nulling_intermediate_rules
+        &self.nulling_intermediate_rules
     }
 
     #[inline(always)]

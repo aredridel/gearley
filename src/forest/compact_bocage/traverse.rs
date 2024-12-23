@@ -4,11 +4,11 @@ use std::iter;
 use bit_vec::BitVec;
 use cfg::symbol::Symbol;
 
-use forest::compact_bocage::node::Node::*;
-use forest::compact_bocage::node::{Iter, Node, Tag};
-use forest::node_handle::NodeHandle;
-use forest::CompactBocage;
-use grammar::InternalGrammar;
+use crate::forest::compact_bocage::node::Node::*;
+use crate::forest::compact_bocage::node::{Iter, Node, Tag};
+use crate::forest::node_handle::NodeHandle;
+use crate::forest::CompactBocage;
+use crate::grammar::InternalGrammar;
 
 pub use self::HandleVariant::*;
 
@@ -168,8 +168,8 @@ impl<'f, 't, G> Products<'f, 't, G>
 where
     G: Borrow<InternalGrammar>,
 {
-    pub fn next_product<'p>(&'p mut self) -> Option<ProductHandle> {
-        while let Some(node) = self.products.next() {
+    pub fn next_product(&mut self) -> Option<ProductHandle> {
+        for node in self.products.by_ref() {
             match node {
                 Product {
                     left_factor,
@@ -199,7 +199,7 @@ where
 
 impl<'f, 't, G> TraversalHandle<'f, 't, G> {
     pub fn end_evaluation(&self) {
-        self.iter.vec[self.iter.handle.usize()].set(Tag::SmallLeafTag.to_u16());
+        self.iter.vec[self.iter.handle.usize()].set(Tag::SmallLeaf.to_u16());
     }
 
     pub fn handle(&self) -> NodeHandle {

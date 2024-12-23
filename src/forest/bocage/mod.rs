@@ -7,12 +7,12 @@ use std::hint;
 
 use bit_vec::BitVec;
 use cfg::symbol::Symbol;
-use ref_slice::ref_slice;
+use core::slice::from_ref;
 
-use forest::node_handle::NodeHandle;
-use forest::Forest;
-use grammar::InternalGrammar;
-use item::CompletedItem;
+use crate::forest::node_handle::NodeHandle;
+use crate::forest::Forest;
+use crate::grammar::InternalGrammar;
+use crate::item::CompletedItem;
 
 use self::node::Node::*;
 use self::node::{CompactNode, Node, NULL_ACTION};
@@ -99,7 +99,7 @@ where
     }
 
     #[inline]
-    fn summands(graph: &Vec<CompactNode>, node: NodeHandle) -> &[CompactNode] {
+    fn summands(graph: &[CompactNode], node: NodeHandle) -> &[CompactNode] {
         unsafe {
             match graph.get_unchecked(node.usize()).expand() {
                 Sum { count, .. } => {
@@ -110,7 +110,7 @@ where
                     let end = node.usize() + count as usize + 1;
                     graph.get_unchecked(start..end)
                 }
-                _ => ref_slice(graph.get_unchecked(node.usize())),
+                _ => from_ref(graph.get_unchecked(node.usize())),
             }
         }
     }
@@ -240,7 +240,7 @@ impl<G> Forest for Bocage<G> {
                     self.graph.push(first_summand);
                     *self.graph.get_unchecked_mut(first_summand_idx) = Sum {
                         nonterminal: lhs_sym,
-                        count: self.summand_count as u32,
+                        count: self.summand_count,
                     }
                     .compact();
                     NodeHandle(first_summand_idx as u32)

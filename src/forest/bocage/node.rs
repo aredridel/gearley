@@ -4,8 +4,7 @@ use std::hint;
 use cfg::symbol::Symbol;
 
 pub use self::Node::*;
-use self::Tag::*;
-use forest::node_handle::{NodeHandle, NULL_HANDLE};
+use crate::forest::node_handle::{NodeHandle, NULL_HANDLE};
 
 // Node variants `Sum`/`Product` are better known in literature as `OR`/`AND`.
 #[derive(Copy, Clone, Debug)]
@@ -60,33 +59,34 @@ union CompactField {
 }
 
 #[derive(Copy, Clone)]
+#[allow(clippy::enum_clike_unportable_variant)]
 enum Tag {
-    LeafTag = 0b00 << TAG_BIT,
-    SumTag = 0b01 << TAG_BIT,
-    ProductTag = 0b10 << TAG_BIT,
+    Leaf = 0b00 << TAG_BIT,
+    Sum = 0b01 << TAG_BIT,
+    Product = 0b10 << TAG_BIT,
 }
 
 impl Tag {
     #[inline]
     fn from_u32(n: u32) -> Option<Self> {
         let n = n & TAG_MASK;
-        if n == LeafTag.to_u32() {
-            Some(LeafTag)
-        } else if n == SumTag.to_u32() {
-            Some(SumTag)
-        } else if n == ProductTag.to_u32() {
-            Some(ProductTag)
+        if n == Tag::Leaf.as_u32() {
+            Some(Tag::Leaf)
+        } else if n == Tag::Sum.as_u32() {
+            Some(Tag::Sum)
+        } else if n == Tag::Product.as_u32() {
+            Some(Tag::Product)
         } else {
             None
         }
     }
 
     #[inline]
-    fn to_u32(&self) -> u32 {
+    fn as_u32(&self) -> u32 {
         match *self {
-            LeafTag => 0b00 << TAG_BIT,
-            SumTag => 0b01 << TAG_BIT,
-            ProductTag => 0b10 << TAG_BIT,
+            Tag::Leaf => 0b00 << TAG_BIT,
+            Tag::Sum => 0b01 << TAG_BIT,
+            Tag::Product => 0b10 << TAG_BIT,
         }
     }
 }
@@ -145,9 +145,9 @@ impl Node {
     #[inline]
     fn tag(&self) -> Tag {
         match self {
-            Product { .. } => ProductTag,
-            Sum { .. } => SumTag,
-            NullingLeaf { .. } | Evaluated { .. } => LeafTag,
+            Product { .. } => Tag::Product,
+            Sum { .. } => Tag::Sum,
+            NullingLeaf { .. } | Evaluated { .. } => Tag::Leaf,
         }
     }
 }
@@ -164,7 +164,7 @@ impl CompactNode {
         unsafe {
             let tag = get_and_erase_tag(&mut fields);
             match tag {
-                LeafTag => {
+                Tag::Leaf => {
                     if fields[1].values == NULL_VALUES {
                         NullingLeaf {
                             symbol: fields[0].symbol,
@@ -176,12 +176,12 @@ impl CompactNode {
                         }
                     }
                 }
-                ProductTag => Product {
+                Tag::Product => Product {
                     action: fields[0].action,
                     left_factor: fields[1].factor,
                     right_factor: fields[2].factor.to_option(),
                 },
-                SumTag => Sum {
+                Tag::Sum => Sum {
                     nonterminal: fields[0].nonterminal,
                     count: fields[1].count,
                 },
@@ -200,13 +200,13 @@ unsafe fn unwrap_unchecked<T>(opt: Option<T>) -> T {
 
 #[inline]
 unsafe fn set_tag(fields: &mut [CompactField; 3], tag: Tag) {
-    fields[0].tag |= tag.to_u32();
+    fields[0].tag |= tag.as_u32();
 }
 
 #[inline]
 unsafe fn get_and_erase_tag(fields: &mut [CompactField; 3]) -> Tag {
     let &mut CompactField { ref mut tag } = &mut fields[0];
     let extract_tag = *tag;
-    *tag = *tag & !TAG_MASK;
+    *tag &= !TAG_MASK;
     unwrap_unchecked(Tag::from_u32(extract_tag))
 }

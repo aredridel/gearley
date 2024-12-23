@@ -1,7 +1,7 @@
 use std::fmt;
 
-use forest::Forest;
-use recognizer::Recognizer;
+use crate::forest::Forest;
+use crate::recognizer::Recognizer;
 
 impl<'g, F: Forest> fmt::Debug for Recognizer<'g, F> {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

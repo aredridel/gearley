@@ -4,10 +4,10 @@ use std::slice;
 use bit_matrix;
 use cfg::symbol::Symbol;
 
-use forest::Forest;
-use grammar::{ExternalDottedRule, Event};
-use item::Item;
-use recognizer::Recognizer;
+use crate::forest::Forest;
+use crate::grammar::{ExternalDottedRule, Event};
+use crate::item::Item;
+use crate::recognizer::Recognizer;
 
 type IterPredictionBitfield<'a> = bit_matrix::row::Iter<'a>;
 

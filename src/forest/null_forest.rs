@@ -1,7 +1,7 @@
 use cfg::symbol::Symbol;
 
-use forest::Forest;
-use item::CompletedItem;
+use crate::forest::Forest;
+use crate::item::CompletedItem;
 
 /// An empty forest.
 pub struct NullForest;
@@ -22,6 +22,5 @@ impl Forest for NullForest {
     fn push_summand(&mut self, _item: CompletedItem<Self::NodeRef>) {}
     #[inline(always)]
     fn sum(&mut self, _lhs_sym: Symbol, _origin: u32) -> Self::NodeRef {
-        ()
     }
 }

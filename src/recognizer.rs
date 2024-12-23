@@ -5,10 +5,10 @@ use bit_matrix::BitMatrix;
 use bit_matrix::row::BitVecSlice;
 use cfg::*;
 
-use events::{MedialItems, PredictedSymbols};
-use forest::{Forest, NullForest};
-use grammar::InternalGrammar;
-use item::{CompletedItem, CompletedItemLinked, Item, Origin};
+use crate::events::{MedialItems, PredictedSymbols};
+use crate::forest::{Forest, NullForest};
+use crate::grammar::InternalGrammar;
+use crate::item::{CompletedItem, CompletedItemLinked, Item, Origin};
 // use policy::{PerformancePolicy, NullPerformancePolicy};
 
 /// The recognizer implements the Earley algorithm. It parses the given input according
@@ -197,11 +197,11 @@ where
         self.indices.truncate(self.indices.len() - drop);
         let current_medial_length = self.medial.len() - self.current_medial_start;
         for i in 0..current_medial_length {
-            self.medial[new_medial_start as usize + i] = self.medial[self.current_medial_start + i];
+            self.medial[new_medial_start + i] = self.medial[self.current_medial_start + i];
         }
         self.medial
-            .truncate(new_medial_start as usize + current_medial_length);
-        self.current_medial_start = new_medial_start as usize;
+            .truncate(new_medial_start + current_medial_length);
+        self.current_medial_start = new_medial_start;
         self.earleme -= drop;
         self.predicted.truncate(self.earleme + 1);
         for dst in self.predicted[self.earleme].iter_mut() {
@@ -486,7 +486,7 @@ where
     /// Skips all items.
     pub fn skip_entire_sum(&mut self) {
         // For each item, include it in the completion.
-        while let Some(_) = self.next_summand() {}
+        while self.next_summand().is_some() {}
     }
 
     /// Allows iteration through completed items.
